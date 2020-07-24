@@ -1,0 +1,163 @@
+version: '3.5'
+
+services:
+  traefik:
+    image: traefik:1.7.14
+    container_name: 'traefik'
+    ports:
+      - 80:80
+    labels:
+      - traefik.frontend.rule=Host:traefik.localdns.xyz
+      - traefik.enable=true
+      - traefik.port=8080
+      - traefik.tags=public
+      - traefik.docker.network=public
+      - traefik.redirectorservice.frontend.entryPoints=http
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: >
+      --docker
+      --docker.watch
+      --docker.exposedbydefault=false
+      --constraints=tag==public
+      --entrypoints='Name:http Address::80'
+      --logLevel=INFO
+      --accessLog
+      --api
+      --metrics
+      --metrics.prometheus
+    networks:
+      - public
+
+  cadvisor:
+    image: google/cadvisor
+    container_name: 'cadvisor'
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    labels:
+      - traefik.frontend.rule=Host:cadvisor.localdns.xyz
+      - traefik.enable=true
+      - traefik.port=8080
+      - traefik.tags=public
+      - traefik.docker.network=public
+      - traefik.redirectorservice.frontend.entryPoints=http
+    networks:
+      - public
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: 'node-exporter'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    labels:
+      - traefik.frontend.rule=Host:node-exporter.localdns.xyz
+      - traefik.enable=true
+      - traefik.port=9100
+      - traefik.tags=public
+      - traefik.docker.network=public
+      - traefik.redirectorservice.frontend.entryPoints=http
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points'
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    networks:
+      - public
+
+  alertmanager:
+    image: prom/alertmanager
+    container_name: 'alertmanager'
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./alertmanager/configs/alertmanager.yml:/etc/alertmanager/config.yml
+      - alertmanager:/alertmanager
+    networks:
+      - public
+    labels:
+      - traefik.frontend.rule=Host:alertmanager.localdns.xyz
+      - traefik.enable=true
+      - traefik.port=9093
+      - traefik.tags=public
+      - traefik.docker.network=public
+      - traefik.redirectorservice.frontend.entryPoints=http
+
+  prometheus:
+    image: prom/prometheus
+    container_name: 'prometheus'
+    user: root
+    volumes:
+      - ./prometheus/configs/prometheus-localhost.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules/alert.rules:/etc/prometheus/alert.rules
+      - promdata:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - public
+    labels:
+      - traefik.frontend.rule=Host:prometheus.localdns.xyz
+      - traefik.enable=true
+      - traefik.port=9090
+      - traefik.tags=public
+      - traefik.docker.network=public
+      - traefik.redirectorservice.frontend.entryPoints=http
+
+  grafana:
+    image: grafana/grafana
+    container_name: 'grafana'
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./grafana/provisioning/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ./grafana/provisioning/dashboards/ds_prometheus.yml:/etc/grafana/provisioning/dashboards/ds_prometheus.yml
+      - ./grafana/provisioning/dashboards/NodeMonitoring.json:/etc/grafana/provisioning/dashboards/NodeMonitoring.json
+      - ./grafana/provisioning/dashboards/ContainerMonitoring.json:/etc/grafana/provisioning/dashboards/ContainerMonitoring.json
+    environment:
+      - GF_SERVER_ROOT_URL=http://grafana.${DOMAIN:-localdns.xyz}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - PROMETHEUS_ENDPOINT=http://prometheus:9090
+    networks:
+      - public
+    labels:
+      - traefik.frontend.rule=Host:grafana.localdns.xyz
+      - traefik.enable=true
+      - traefik.port=3000
+      - traefik.tags=public
+      - traefik.docker.network=public
+      - traefik.redirectorservice.frontend.entryPoints=http
+
+  flask-app:
+    build: 
+      context: ./flask-app
+      dockerfile: Dockerfile
+    container_name: 'flask-app'
+    networks:
+      - public
+    labels:
+      - traefik.frontend.rule=Host:flask-app.localdns.xyz
+      - traefik.enable=true
+      - traefik.port=5000
+      - traefik.tags=public
+      - traefik.docker.network=public
+      - traefik.redirectorservice.frontend.entryPoints=http
+
+networks:
+  public: 
+    name: public
+  
+volumes:
+  promdata: {}
+  grafanadata: {}
+  alertmanager: {}
+
