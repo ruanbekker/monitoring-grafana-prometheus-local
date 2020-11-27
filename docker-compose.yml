@@ -7,7 +7,7 @@ services:
     ports:
       - 80:80
     labels:
-      - traefik.frontend.rule=Host:traefik.localdns.xyz
+      - traefik.frontend.rule=Host:traefik.${DOMAIN:-localdns.xyz}
       - traefik.enable=true
       - traefik.port=8080
       - traefik.tags=public
@@ -39,7 +39,7 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
     labels:
-      - traefik.frontend.rule=Host:cadvisor.localdns.xyz
+      - traefik.frontend.rule=Host:cadvisor.${DOMAIN:-localdns.xyz}
       - traefik.enable=true
       - traefik.port=8080
       - traefik.tags=public
@@ -56,7 +56,7 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     labels:
-      - traefik.frontend.rule=Host:node-exporter.localdns.xyz
+      - traefik.frontend.rule=Host:node-exporter.${DOMAIN:-localdns.xyz}
       - traefik.enable=true
       - traefik.port=9100
       - traefik.tags=public
@@ -82,7 +82,7 @@ services:
     networks:
       - public
     labels:
-      - traefik.frontend.rule=Host:alertmanager.localdns.xyz
+      - traefik.frontend.rule=Host:alertmanager.${DOMAIN:-localdns.xyz}
       - traefik.enable=true
       - traefik.port=9093
       - traefik.tags=public
@@ -105,7 +105,7 @@ services:
     networks:
       - public
     labels:
-      - traefik.frontend.rule=Host:prometheus.localdns.xyz
+      - traefik.frontend.rule=Host:prometheus.${DOMAIN:-localdns.xyz}
       - traefik.enable=true
       - traefik.port=9090
       - traefik.tags=public
@@ -115,6 +115,8 @@ services:
   grafana:
     image: grafana/grafana
     container_name: 'grafana'
+    depends_on:
+      - loki
     volumes:
       - grafanadata:/var/lib/grafana
       - ./grafana/provisioning/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml
@@ -130,27 +132,54 @@ services:
     networks:
       - public
     labels:
-      - traefik.frontend.rule=Host:grafana.localdns.xyz
+      - traefik.frontend.rule=Host:grafana.${DOMAIN:-localdns.xyz}
       - traefik.enable=true
       - traefik.port=3000
       - traefik.tags=public
       - traefik.docker.network=public
       - traefik.redirectorservice.frontend.entryPoints=http
 
+  loki:
+   image: grafana/loki:2.0.0
+   container_name: loki
+   volumes:
+     - ./loki/configs/loki.yaml:/etc/config/loki.yaml
+   entrypoint:
+     - /usr/bin/loki
+     - -config.file=/etc/config/loki.yaml
+   networks:
+     - public
+   ports:
+     - 3100:3100
+   labels:
+     - traefik.frontend.rule=Host:loki.${DOMAIN:-localdns.xyz}
+     - traefik.enable=true
+     - traefik.port=3100
+     - traefik.tags=public
+     - traefik.docker.network=public
+     - traefik.redirectorservice.frontend.entryPoints=http
+
   flask-app:
     build: 
       context: ./flask-app
       dockerfile: Dockerfile
     container_name: 'flask-app'
+    depends_on:
+      - loki
     networks:
       - public
     labels:
-      - traefik.frontend.rule=Host:flask-app.localdns.xyz
+      - traefik.frontend.rule=Host:flask-app.${DOMAIN:-localdns.xyz}
       - traefik.enable=true
       - traefik.port=5000
       - traefik.tags=public
       - traefik.docker.network=public
       - traefik.redirectorservice.frontend.entryPoints=http
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=development
 
 networks:
   public: 

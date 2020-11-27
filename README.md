@@ -16,11 +16,24 @@ Stack will give you:
 
 ## Usage
 
-To boot your stack:
+We are using loki to ship logs from our containers, so we need to install the loki docker driver:
 
 ```
-$ docker-compose build
-$ docker-compose up -d
+$ docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+```
+
+To boot your stack in localhost mode (ie. traefik.localdns.xyz -> 127.0.0.1):
+
+```
+$ docker-compose up --build -d
+```
+
+To boot your stack in ip mode (ie. traefik.10.2.3.4.nip.io -> 10.2.3.4):
+
+```
+$ IP=$(curl -s -4 ifconfig.co)
+$ export DOMAIN=${IP}.nip.io
+$ docker-compose up --build -d
 ```
 
 Access [http://traefik.localdns.xyz](http://traefik.localdns.xyz) for viewing the Traefik Dashboard, or [grafana.localdns.xyz](http://grafana.localdns.xyz) to access Grafana and 2 pre-made dashboards will be visible to view node and container level metrics.

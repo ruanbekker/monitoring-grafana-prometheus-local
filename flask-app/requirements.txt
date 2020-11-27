@@ -6,3 +6,4 @@ MarkupSafe==1.1.1
 prometheus-client==0.8.0
 prometheus-flask-exporter==0.15.4
 Werkzeug==1.0.1
+json-logging

@@ -14,15 +14,15 @@ receivers:
 #      - send_resolved: true
 #        channel: '#notifications'
 #        username: 'AlertManager'
-#        api_url: '<incomming-webhook-url>'
-#        title_link: 'http://alertmanager.localdns.xyz:9093/#/alerts'
+#        api_url: 'https://hooks.slack.com/services/xx/xx/xx'
+#        title_link: 'http://alertmanager.localdns.xyz/#/alerts'
 #        title: '{{ if eq .Status "firing" }}:flushed:{{ else }}:sunglasses:{{ end }} [{{ .Status | toUpper }}] {{ .CommonAnnotations.summary }} (catchall)'
-#        text: "{{ range .Alerts }}*Priority*: `{{ .Labels.severity | toUpper }}`\nTarget: {{ .Labels.instance }}\n{{ .Annotations.description }}\n{{ end }}"
+#        text: "{{ range .Alerts }}*Priority*: `{{ .Labels.severity | toUpper }}`\n*Target*: {{ .Labels.instance }}\n*Description*: {{ .Annotations.description }}\n{{ end }}"
 
 #  - name: 'detailed-slack'
 #    slack_configs:
 #      - send_resolved: true
-#        title_link: 'http://alertmanager.localdns.xyz:9093/#/alerts'
+#        title_link: 'http://alertmanager.localdns.xyz/#/alerts'
 #        title: '{{ if eq .Status "firing" }}:sadparrot:{{ else }}:fastparrot:{{ end }} [{{ .Status | toUpper }}] {{ .CommonAnnotations.title }} (instances)'
 #        channel: '#system_events'
 #        text: >-
