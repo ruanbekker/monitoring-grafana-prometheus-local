@@ -37,4 +37,7 @@ For the web application you can access it on [flask-app.localdns.xyz](http://fla
 - `/skip` - does not collect metrics
 - `/metrics` view the metrics that is exporter for prometheus to scrape
 
+For more detailed alerting have a look at my [prometheus-alerting-alertmanager](https://github.com/ruanbekker/prometheus-alerting-alertmanager) repo:
+- [alertmanager.yml](https://github.com/ruanbekker/prometheus-alerting-alertmanager/blob/main/alertmanager/alertmanager.yml)
+- [host_alerts.rules](https://github.com/ruanbekker/prometheus-alerting-alertmanager/blob/main/prometheus-a/rules/host_alert.rules)
 
