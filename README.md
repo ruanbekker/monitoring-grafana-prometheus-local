@@ -54,3 +54,6 @@ For more detailed alerting have a look at my [prometheus-alerting-alertmanager](
 - [alertmanager.yml](https://github.com/ruanbekker/prometheus-alerting-alertmanager/blob/main/alertmanager/alertmanager.yml)
 - [host_alerts.rules](https://github.com/ruanbekker/prometheus-alerting-alertmanager/blob/main/prometheus-a/rules/host_alert.rules)
 
+## Resources
+
+- [Prometheus Recording Rules](https://deploy.live/blog/today-i-learned-prometheus-recording-rules/) and [another example](https://medium.com/javarevisited/create-recording-rules-in-prometheus-8a6a1c0b9e11)
