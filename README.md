@@ -2,6 +2,9 @@
 
 This is a local stack that you can boot with docker-compose which will give you: Traefik, Grafana, Prometheus, cAdvisor, Node-Exporter, AlertManager, Python App instrumented with Prometheus
 
+Note: This is a more updated solution:
+- https://github.com/ruanbekker/docker-monitoring-stack-gpnc
+
 ## Contents
 
 Stack will give you:
